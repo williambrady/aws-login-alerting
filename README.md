@@ -6,3 +6,5 @@ TODOS:
  - [X] e-mail alert when federated login occurs
  - [ ] slack alert when federated login occurs
  - [ ] add exception list to logins
+
+`aws cloudformation create-stack --stack-name aws-login-alerting --template-body file://aws-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="teamDistributionList@example.org" ParameterKey=SNSTopicName,ParameterValue=federated-login-alerting ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM`

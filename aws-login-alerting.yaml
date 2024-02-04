@@ -111,7 +111,7 @@ Resources:
           		logger.error("An error occured: %s" %e)
       Handler: index.handler
       Role: !GetAtt 'FederatedLambdaAPIMonitorRole.Arn'
-      Runtime: python2.7
+      Runtime: python3.9
       Timeout: !Ref 'LambdaTimeout'
       Environment:
         Variables:

@@ -7,9 +7,40 @@ TODOS:
  - [ ] slack alert when federated login occurs
  - [ ] add exception list to logins
 
+Some assets are deployed in the Home Region and others are outside the Home Region.
 
-Example:
+Home Region Assets:
+ - EventBridge EventRule to search for string and forward matches to Lambda
+ - Lambda function (and roles) to parse the event and deliver to SNS
+ - SNS Topic & Subscription to deliver notification to end-users
+
+Other Region Assets:
+ - EventBridge EventRule to search for string and forward to Home Region EventBridge
+
+
+To deploy in the Home Region where the processing and alerting occurs:
 
 ```
-aws cloudformation create-stack --stack-name aws-login-alerting --template-body file://aws-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="teamDistributionList@example.org" ParameterKey=SNSTopicName,ParameterValue=federated-login-alerting ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-east-1
+aws cloudformation create-stack --stack-name console-login-alerting --template-body file://cfn-console-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-east-1
+
+aws cloudformation update-stack --stack-name console-login-alerting --template-body file://cfn-console-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-east-1
+```
+
+Then for all subsequent regions, iterate the value of `--region`
+
+```
+aws cloudformation create-stack --stack-name console-login-alerting --template-body file://cfn-console-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-east-2
+
+aws cloudformation create-stack --stack-name console-login-alerting --template-body file://cfn-console-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-west-1
+
+aws cloudformation create-stack --stack-name console-login-alerting --template-body file://cfn-console-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-west-2
+```
+
+Notes for quick removal:
+
+```
+aws cloudformation delete-stack --stack-name console-login-alerting --region us-west-2
+aws cloudformation delete-stack --stack-name console-login-alerting --region us-west-1
+aws cloudformation delete-stack --stack-name console-login-alerting --region us-east-2
+aws cloudformation delete-stack --stack-name console-login-alerting --region us-east-1
 ```

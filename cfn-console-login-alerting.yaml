@@ -1,5 +1,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Alert on Web Console Logins to AWS Account
+############################################################################################################
+# Updated to meet the needs of Security Hub checks:
+# - SNS.1: SNS topics should be encrypted at-rest using AWS KMS
+# - SNS.2: Logging of delivery status should be enabled for notification messages sent to a topic
+############################################################################################################
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -11,6 +17,7 @@ Metadata:
           default: AWS Lambda parameters
         Parameters:
           - LambdaTimeout
+
 Parameters:
   SNSSubscriptions:
     Type: String
@@ -24,12 +31,35 @@ Parameters:
     Type: String
     Default: us-east-1
     Description: The region in which the stack is created
+  KMSKeyDeletionWindowInDays:
+    Type: Number
+    Default: 7
+    Description: Number of days to retain Deleted Keys
 
 Conditions:
   IsHomeRegion: !Equals [ !Ref 'AWS::Region', !Ref 'HomeRegion' ]
   IsAwayRegion: !Not [ !Condition IsHomeRegion ]
 
 Resources:
+  SNSKMSKey:
+    # Home Region Only
+    Condition: IsHomeRegion
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Encryption key for AWS SNS
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
+            Action:
+              - kms:*
+            Resource: '*'
+      PendingWindowInDays: !Ref KMSKeyDeletionWindowInDays
+
   ActivitySNSTopic:
     # Home Region Only
     Condition: IsHomeRegion
@@ -37,9 +67,38 @@ Resources:
     Properties:
       DisplayName: !Ref AWS::StackName
       Subscription:
-        - Endpoint: !Ref 'SNSSubscriptions'
+        - Endpoint: !Ref SNSSubscriptions
           Protocol: email
       TopicName: !Ref AWS::StackName
+      KmsMasterKeyId: !GetAtt SNSKMSKey.Arn
+      DeliveryStatusLogging:
+        - FailureFeedbackRoleArn: !GetAtt SNSPublishToCloudwatchLogsRole.Arn
+          SuccessFeedbackRoleArn: !GetAtt SNSPublishToCloudwatchLogsRole.Arn
+          Protocol: sqs
+
+  SNSPublishToCloudwatchLogsRole:
+    # Home Region Only
+    Condition: IsHomeRegion
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: sns.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: SNSPublishToCloudwatchLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/sns/*'
 
   EventRole:
     # Home Region Only
@@ -84,11 +143,6 @@ Resources:
           - AWS API Call via CloudTrail
           - AWS Console Sign In via CloudTrail
         detail:
-          # userIdentity: type: AssumedRole for federated logins
-          # userIdentity: type: IAMUser for IAM user logins
-          # userIdentity:
-          #   type:
-          #     - AssumedRole
           eventName:
             - ConsoleLogin
       Name: !Sub '${AWS::StackName}-${AWS::AccountId}-${AWS::Region}-ActivityRule'

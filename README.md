@@ -21,19 +21,17 @@ Other Region Assets:
 To deploy in the Home Region where the processing and alerting occurs:
 
 ```
-aws cloudformation create-stack --stack-name console-login-alerting --template-body file://cfn-console-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-east-1
-
-aws cloudformation update-stack --stack-name console-login-alerting --template-body file://cfn-console-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-east-1
+aws cloudformation deploy --stack-name "console-login-alerting" --template-file cfn-console-login-alerting.yaml --profile 795177604632 --region us-east-1 --parameter-overrides ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM
 ```
 
 Then for all subsequent regions, iterate the value of `--region`
 
 ```
-aws cloudformation create-stack --stack-name console-login-alerting --template-body file://cfn-console-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-east-2
+aws cloudformation deploy --stack-name "console-login-alerting" --template-file cfn-console-login-alerting.yaml --profile 795177604632 --region us-east-2 --parameter-overrides ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM
 
-aws cloudformation create-stack --stack-name console-login-alerting --template-body file://cfn-console-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-west-1
+aws cloudformation deploy --stack-name "console-login-alerting" --template-file cfn-console-login-alerting.yaml --profile 795177604632 --region us-west-1 --parameter-overrides ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM
 
-aws cloudformation create-stack --stack-name console-login-alerting --template-body file://cfn-console-login-alerting.yaml --parameters ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM --profile 795177604632 --region us-west-2
+aws cloudformation deploy --stack-name "console-login-alerting" --template-file cfn-console-login-alerting.yaml --profile 795177604632 --region us-west-2 --parameter-overrides ParameterKey=SNSSubscriptions,ParameterValue="will@crofton.cloud" ParameterKey=HomeRegion,ParameterValue=us-east-1 ParameterKey=LambdaTimeout,ParameterValue=60 --capabilities CAPABILITY_NAMED_IAM
 ```
 
 Notes for quick removal:
